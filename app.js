@@ -474,32 +474,23 @@ document.addEventListener('DOMContentLoaded', () => {
         voiceBtn.disabled = true;
 
         try {
-            const response = await fetch('https://music-card-backend.onrender.com/api/speech', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ text: textToSpeech, voice: voiceSelect.value })
-            });
-
-            if (!response.ok) throw new Error('Ошибка синтеза речи');
-
-            const blob = await response.blob();
-            const audioUrl = URL.createObjectURL(blob);
-
-            voiceAudio.src = audioUrl;
-
-            // Start audio context if suspended
+            // Unsuspend audio context synchronously
             initAudioContext();
             if (audioCtx.state === 'suspended') {
-                await audioCtx.resume();
+                audioCtx.resume();
             }
 
+            // For mobile Safari compatibility, we MUST call .play() synchronously inside 
+            // the click handler, without awaiting a fetch() first.
+            const url = `https://music-card-backend.onrender.com/api/speech?text=${encodeURIComponent(textToSpeech)}&voice=${voiceSelect.value}`;
+            voiceAudio.src = url;
+
+            // Start playing immediately. The browser will handle the network streaming.
             await voiceAudio.play();
 
             // Mix with background music
             if (!isPlaying) {
-                await togglePlay(true); // Directly call the play function instead of simulating a click
+                await togglePlay(true);
             }
 
             // Lower background music volume smoothly to let voice punch through (ducking)
@@ -514,7 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error(error);
-            alert('Не удалось сгенерировать голос. Проверьте сервер.');
+            alert('Не удалось запустить голос: ' + error.message);
             voiceBtn.innerHTML = originalText;
             voiceBtn.disabled = false;
         }
