@@ -85,12 +85,24 @@ document.addEventListener('DOMContentLoaded', () => {
             bgAudio.crossOrigin = "anonymous";
             voiceAudio.crossOrigin = "anonymous";
 
-            source = audioCtx.createMediaElementSource(bgAudio);
-            const voiceSource = audioCtx.createMediaElementSource(voiceAudio);
+            // iOS Safari has severe bugs with Web Audio API and cross-origin media streams.
+            // Routing them through standard MediaElementSource often results in silence or static.
+            // So on iOS, we skip the Web Audio routing entirely and let the visualizer stay flat,
+            // while the audio plays normally through the native HTML5 elements.
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-            source.connect(analyser);
-            voiceSource.connect(analyser);
-            analyser.connect(audioCtx.destination);
+            if (!isIOS) {
+                try {
+                    source = audioCtx.createMediaElementSource(bgAudio);
+                    const voiceSource = audioCtx.createMediaElementSource(voiceAudio);
+
+                    source.connect(analyser);
+                    voiceSource.connect(analyser);
+                    analyser.connect(audioCtx.destination);
+                } catch (e) {
+                    console.warn("Could not connect audio sources to analyser (likely already connected):", e);
+                }
+            }
 
             analyser.fftSize = 64;
             bufferLength = analyser.frequencyBinCount;
