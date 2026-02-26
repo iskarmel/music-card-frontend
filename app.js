@@ -236,8 +236,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return data.lyrics;
         } catch (error) {
             console.error('Error fetching lyrics:', error);
-            alert('Не удалось связаться с сервером ИИ. Убедитесь, что сервер запущен (npm start).');
-            return 'К сожалению, не удалось связаться с ИИ. Пожалуйста, убедитесь, что сервер запущен на порту 3000.';
+            alert('Не удалось связаться с сервером ИИ. Серверу может потребоваться до 50 секунд для выхода из спящего режима на бесплатном тарифе, подождите немного и попробуйте снова.');
+            return 'К сожалению, не удалось связаться с ИИ. Пожалуйста, подождите немного, пока сервер запустится.';
         }
     };
 
@@ -538,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.classList.add('hidden');
         loadingState.classList.remove('hidden');
 
-        fetch(`http://localhost:3000/api/cards/${cardId}`)
+        fetch(`https://music-card-backend.onrender.com/api/cards/${cardId}`)
             .then(res => {
                 if (!res.ok) throw new Error("Card not found");
                 return res.json();
@@ -550,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 playingMelodyName.textContent = data.melodyText;
                 currentAudioUrl = data.audioUrl;
 
-                bgAudio.src = `http://localhost:3000/api/audio-proxy?url=${encodeURIComponent(currentAudioUrl)}`;
+                bgAudio.src = `https://music-card-backend.onrender.com/api/audio-proxy?url=${encodeURIComponent(currentAudioUrl)}`;
                 bgAudio.load();
 
                 loadingState.classList.add('hidden');
