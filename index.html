@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Музыкальная Открытка с ИИ 🎵" />
+    <meta property="og:description"
+        content="Уникальное аудио-поздравление, созданное с помощью нейросетей. Нажмите, чтобы послушать!" />
+    <meta property="og:image"
+        content="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200&auto=format&fit=crop" />
+    <meta property="og:type" content="website" />
+    <title>Музыкальная Открытка</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700&display=swap"
+        rel="stylesheet">
+    <!-- Main Styles -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Phosphor Icons for premium icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- html2canvas for downloading cards -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Floating animated background elements -->
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+
+        <main class="glass-panel" id="main-panel">
+            <header class="app-header">
+                <i class="ph-fill ph-music-notes-simple logo-icon"></i>
+                <h1>Музыкальная Открытка</h1>
+                <p class="subtitle">Создайте персональное поздравление с ИИ</p>
+            </header>
+
+            <!-- Loading State -->
+            <div id="loading-state" class="hidden">
+                <div class="loader-container">
+                    <div class="waveform">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                    <p class="loader-text">ИИ сочиняет хиты...</p>
+                </div>
+            </div>
+
+            <!-- Result Card View -->
+            <div id="result-view" class="hidden">
+                <div class="result-card" id="card-to-download">
+                    <div class="card-header">
+                        <h2>Для <span id="res-name" class="highlight-text editable-lyrics" contenteditable="true"
+                                spellcheck="false" title="Кликните, чтобы изменить имя">Имя</span>!</h2>
+                        <p id="res-occasion" class="occasion-tag editable-lyrics" contenteditable="true"
+                            spellcheck="false" title="Кликните, чтобы изменить повод">Поздравление</p>
+                    </div>
+                    <div class="song-lyrics-container">
+                        <p id="song-lyrics" class="lyrics-text editable-lyrics" contenteditable="true"
+                            spellcheck="false" title="Нажмите, чтобы отредактировать текст"></p>
+                    </div>
+
+                    <div class="audio-player-ui">
+                        <button id="play-pause-btn" class="icon-btn pulse-glow">
+                            <i class="ph-fill ph-pause"></i>
+                        </button>
+                        <div class="audio-info">
+                            <span class="now-playing-label">Сейчас играет</span>
+                            <span id="playing-melody-name" class="melody-name">Мелодия</span>
+                        </div>
+                        <canvas id="visualizer" width="100" height="40"></canvas>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <div class="voice-controls">
+                        <select id="voice-select" class="voice-select" title="Выберите голос ИИ">
+                            <option value="onyx">Мужской (Onyx)</option>
+                            <option value="nova">Женский (Nova)</option>
+                            <option value="alloy">Мужской 2 (Alloy)</option>
+                            <option value="shimmer">Женский 2 (Shimmer)</option>
+                        </select>
+                        <button id="voice-btn" class="btn action-btn voice-play-btn"><i
+                                class="ph-bold ph-microphone-stage"></i> ИИ Озвучка</button>
+                    </div>
+                    <button id="share-btn" class="btn action-btn"><i class="ph-bold ph-share-network"></i>
+                        Поделиться</button>
+                    <button id="copy-text-btn" class="btn action-btn"><i class="ph-bold ph-copy"></i>
+                        Скопировать стих</button>
+                </div>
+
+                <div id="social-panel" class="social-panel hidden">
+                    <p class="social-title">Или перешлите текстом:</p>
+                    <div class="social-icons">
+                        <button id="share-tg" class="social-btn tg" title="Telegram"><i
+                                class="ph-fill ph-telegram-logo"></i></button>
+                        <button id="share-wa" class="social-btn wa" title="WhatsApp"><i
+                                class="ph-fill ph-whatsapp-logo"></i></button>
+                        <button id="share-vb" class="social-btn vb" title="Viber"><i
+                                class="ph-fill ph-phone-call"></i></button>
+                        <button id="share-copy" class="social-btn copy" title="Копировать текст"><i
+                                class="ph-bold ph-copy"></i></button>
+                    </div>
+                </div>
+
+                <button id="create-new-btn" class="btn secondary-btn">Создать новую открытку</button>
+            </div>
+
+            <!-- Creation Form View -->
+            <form id="creation-form" class="creation-form">
+                <div class="form-group">
+                    <label for="recipient-name">Кого поздравляем?</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-user"></i>
+                        <input type="text" id="recipient-name" placeholder="Например: Мария" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="occasion">По какому поводу?</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-confetti"></i>
+                        <input type="text" id="occasion" placeholder="Например: День Рождения, 8 Марта" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="melody">Выберите настроение мелодии</label>
+                    <div class="input-wrapper select-wrapper">
+                        <i class="ph ph-vinyl-record"></i>
+                        <select id="melody" required>
+                            <option value="" disabled selected>Выберите стиль хита...</option>
+                            <option value="basta" data-style="Баста (Лирический рэп)"
+                                data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">Баста -
+                                Лирический рэп (Тестовый минус)</option>
+                            <option value="leps" data-style="Григорий Лепс (Рок-баллада, надрыв)"
+                                data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">Григорий Лепс -
+                                Рок-баллада (Тестовый минус)</option>
+                            <option value="zhukov" data-style="Руки Вверх / Поп-хит 90-х (Танцевальный)"
+                                data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">Руки Вверх -
+                                Танцевальный хит (Тестовый минус)</option>
+                        </select>
+                        <i class="ph ph-caret-down select-arrow"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="segment-control">
+                        <input type="radio" id="mode-ai" name="generation-mode" value="ai" checked>
+                        <label for="mode-ai">✨ ИИ Генерация</label>
+
+                        <input type="radio" id="mode-manual" name="generation-mode" value="manual">
+                        <label for="mode-manual">✍️ Свой готовый текст</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label id="dictation-label" for="dictation">Что пожелать? <span id="mic-badge"
+                            class="badge">Голосовой ввод</span></label>
+                    <p id="dictation-helper" class="helper-text">Надиктуйте суть поздравления, а ИИ превратит это в
+                        красивую песню.</p>
+                    <div class="dictation-wrapper">
+                        <textarea id="dictation" placeholder="Скажите что-нибудь теплое..." rows="4"
+                            required></textarea>
+                        <button type="button" id="mic-btn" class="mic-btn" aria-label="Начать запись">
+                            <i class="ph-fill ph-microphone"></i>
+                            <span class="pulse-ring"></span>
+                        </button>
+                    </div>
+                    <div id="mic-status" class="status-text hidden">Слушаю вас...</div>
+                </div>
+
+                <button type="submit" id="generate-btn" class="btn primary-btn btn-glow">
+                    <i class="ph-bold ph-magic-wand"></i>
+                    Создать Музыкальную Открытку
+                </button>
+            </form>
+        </main>
+    </div>
+
+    <!-- Hidden audio element -->
+    <audio id="bg-audio" loop></audio>
+    <audio id="voice-audio"></audio>
+
+    <!-- Main Logic -->
+    <script src="app.js"></script>
+</body>
+
+</html>
