@@ -360,11 +360,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const getShareUrl = async () => {
-        if (currentCardId) {
-            const baseUrl = window.location.href.split('?')[0].split('#')[0];
-            return `${baseUrl}?id=${currentCardId}`;
-        }
-
         const data = {
             name: resName.textContent,
             occasion: resOccasion.textContent,
@@ -374,27 +369,18 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const response = await fetch('https://music-card-backend.onrender.com/api/cards', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            if (!response.ok) {
-                throw new Error("Server returned " + response.status);
-            }
-            const result = await response.json();
-            currentCardId = result.id;
-
-            // Generate a clean URL even if the user is viewing via file:///
+            const jsonStr = JSON.stringify(data);
+            const compressed = LZString.compressToEncodedURIComponent(jsonStr);
             let baseUrl = window.location.href.split('?')[0].split('#')[0];
-            if (baseUrl.startsWith('file://')) {
-                // If running locally without a web server, provide a fallback local link format
-                baseUrl = 'https://music-card-backend.onrender.com/';
+
+            // Generate a clean URL even if the user is viewing via file:/// or localhost
+            if (baseUrl.startsWith('file://') || baseUrl.includes('localhost')) {
+                baseUrl = 'https://music-card-frontend.vercel.app/';
             }
 
-            return `${baseUrl}?id=${currentCardId}`;
+            return `${baseUrl}?data=${compressed}`;
         } catch (error) {
-            console.error("Failed to save card for sharing", error);
+            console.error("Failed to generate share link", error);
             alert("Не удалось создать ссылку для этой открытки.");
             return window.location.href; // Fallback
         }
@@ -531,10 +517,42 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- On Load: Check if Card is Shared in URL ---
     const urlParams = new URLSearchParams(window.location.search);
     const cardId = urlParams.get('id');
+    const cardDataStr = urlParams.get('data');
 
-    if (cardId) {
+    const loadCardData = (data) => {
+        resName.textContent = data.name;
+        resOccasion.textContent = data.occasion;
+        songLyrics.textContent = data.lyrics;
+        playingMelodyName.textContent = data.melodyText;
+        currentAudioUrl = data.audioUrl;
+
+        bgAudio.src = `https://music-card-backend.onrender.com/api/audio-proxy?url=${encodeURIComponent(currentAudioUrl)}`;
+        bgAudio.load();
+
+        loadingState.classList.add('hidden');
+        resultView.classList.remove('hidden');
+
+        // Suggest playing the voice immediately to the receiver
+        voiceBtn.classList.add('pulse-glow');
+        voiceBtn.innerHTML = '<i class="ph-bold ph-play-circle"></i> Нажмите, чтобы послушать ИИ';
+    };
+
+    if (cardDataStr) {
+        try {
+            form.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            const jsonStr = LZString.decompressFromEncodedURIComponent(cardDataStr);
+            const data = JSON.parse(jsonStr);
+            loadCardData(data);
+        } catch (e) {
+            console.error('Failed to parse card data from URL param', e);
+            loadingState.classList.add('hidden');
+            form.classList.remove('hidden');
+            alert("Открытка повреждена или ссылка устарела.");
+        }
+    } else if (cardId) {
         currentCardId = cardId;
-        // Show loading state while fetching card
+        // Show loading state while fetching from old backend links
         form.classList.add('hidden');
         loadingState.classList.remove('hidden');
 
@@ -543,28 +561,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!res.ok) throw new Error("Card not found");
                 return res.json();
             })
-            .then(data => {
-                resName.textContent = data.name;
-                resOccasion.textContent = data.occasion;
-                songLyrics.textContent = data.lyrics;
-                playingMelodyName.textContent = data.melodyText;
-                currentAudioUrl = data.audioUrl;
-
-                bgAudio.src = `https://music-card-backend.onrender.com/api/audio-proxy?url=${encodeURIComponent(currentAudioUrl)}`;
-                bgAudio.load();
-
-                loadingState.classList.add('hidden');
-                resultView.classList.remove('hidden');
-
-                // Suggest playing the voice immediately to the receiver
-                voiceBtn.classList.add('pulse-glow');
-                voiceBtn.innerHTML = '<i class="ph-bold ph-play-circle"></i> Нажмите, чтобы послушать ИИ';
-            })
+            .then(data => loadCardData(data))
             .catch(e => {
-                console.error('Failed to parse card data from URL', e);
+                console.error('Failed to fetch card data from URL', e);
                 loadingState.classList.add('hidden');
                 form.classList.remove('hidden');
-                alert("Открытка не найдена или ссылка устарела.");
+                alert("К сожалению, эта ссылка устарела или сервер был перезагружен.");
             });
     }
 });
