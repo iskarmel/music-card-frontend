@@ -311,21 +311,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Audio Player Controls ---
-    playPauseBtn.addEventListener('click', async () => {
-        if (isPlaying) {
+    const togglePlay = async (forcePlay = false) => {
+        if (isPlaying && !forcePlay) {
             bgAudio.pause();
             playIcon.classList.replace('ph-pause', 'ph-play');
             playPauseBtn.classList.remove('pulse-glow');
             isPlaying = false;
             cancelAnimationFrame(visualizerAnimationId);
             canvasCtx.clearRect(0, 0, visualizer.width, visualizer.height);
-        } else {
+        } else if (!isPlaying || forcePlay) {
             initAudioContext();
             if (audioCtx.state === 'suspended') {
                 await audioCtx.resume();
             }
 
             try {
+                // Ensure audio is loaded before playing
+                if (bgAudio.readyState === 0) {
+                    bgAudio.load();
+                }
+
                 await bgAudio.play();
                 playIcon.classList.replace('ph-play', 'ph-pause');
                 playPauseBtn.classList.add('pulse-glow');
@@ -333,13 +338,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 drawVisualizer();
             } catch (err) {
                 console.error("Playback failed (invalid URL or blocked):", err);
-                // alert('Не удалось воспроизвести песню. Возможно, проблема с интернет-соединением или ссылкой на аудио.');
                 playIcon.classList.replace('ph-pause', 'ph-play');
                 playPauseBtn.classList.remove('pulse-glow');
                 isPlaying = false;
             }
         }
-    });
+    };
+
+    playPauseBtn.addEventListener('click', () => togglePlay());
 
     // --- Share & Download Logic ---
     shareBtn.addEventListener('click', () => {
@@ -493,7 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Mix with background music
             if (!isPlaying) {
-                playPauseBtn.click(); // Trigger play on background track
+                await togglePlay(true); // Directly call the play function instead of simulating a click
             }
 
             // Lower background music volume smoothly to let voice punch through (ducking)
