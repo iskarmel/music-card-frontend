@@ -160,10 +160,21 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="melody">Выберите фоновую музыку</label>
-                    <div class="input-wrapper select-wrapper">
+                    <label>Фоновая музыка (Минус)</label>
+                    <div class="segment-control audio-tabs" style="margin-bottom: 12px;">
+                        <input type="radio" id="src-catalog" name="audio-source" value="catalog" checked>
+                        <label for="src-catalog"><i class="ph ph-list-music"></i> Каталог</label>
+
+                        <input type="radio" id="src-upload" name="audio-source" value="upload">
+                        <label for="src-upload"><i class="ph ph-upload-simple"></i> Файл</label>
+
+                        <input type="radio" id="src-link" name="audio-source" value="link">
+                        <label for="src-link"><i class="ph ph-link"></i> Ссылка</label>
+                    </div>
+
+                    <div id="audio-catalog-wrapper" class="input-wrapper select-wrapper audio-input-view">
                         <i class="ph ph-vinyl-record"></i>
-                        <select id="melody" required>
+                        <select id="melody">
                             <option value="" disabled selected>Выберите стиль хита...</option>
                             <option value="basta" data-style="Баста (Лирический рэп)"
                                 data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">Баста -
@@ -177,11 +188,24 @@
                         </select>
                         <i class="ph ph-caret-down select-arrow"></i>
                     </div>
-                    <!-- Future upload area -->
-                    <!-- <div class="audio-upload-dropzone">
-                        <i class="ph ph-upload-simple"></i>
-                        <span>или перетащите свой .mp3 файл сюда</span>
-                    </div> -->
+
+                    <div id="audio-upload-wrapper" class="audio-upload-dropzone audio-input-view hidden">
+                        <input type="file" id="audio-file" accept=".mp3, .wav, audio/mpeg, audio/wav" class="hidden"
+                            style="display: none;">
+                        <label for="audio-file" class="upload-label"
+                            style="cursor: pointer; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80px; border: 2px dashed rgba(255, 255, 255, 0.2); border-radius: 12px; background: rgba(0, 0, 0, 0.2); transition: all 0.3s ease;">
+                            <i class="ph ph-upload-simple"
+                                style="font-size: 1.5rem; margin-bottom: 8px; color: var(--primary-light);"></i>
+                            <span id="upload-filename"
+                                style="color: var(--text-secondary); font-size: 0.9rem; text-align: center; padding: 0 10px;">Нажмите,
+                                чтобы выбрать .mp3 файл<br><small>(до 15 МБ)</small></span>
+                        </label>
+                    </div>
+
+                    <div id="audio-link-wrapper" class="input-wrapper audio-input-view hidden">
+                        <i class="ph ph-link"></i>
+                        <input type="url" id="audio-link" placeholder="Вставьте прямую ссылку на .mp3">
+                    </div>
                 </div>
 
                 <button type="submit" id="generate-btn" class="btn primary-btn btn-glow">
