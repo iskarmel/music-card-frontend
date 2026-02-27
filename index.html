@@ -131,33 +131,15 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="melody">Выберите настроение мелодии</label>
-                    <div class="input-wrapper select-wrapper">
-                        <i class="ph ph-vinyl-record"></i>
-                        <select id="melody" required>
-                            <option value="" disabled selected>Выберите стиль хита...</option>
-                            <option value="basta" data-style="Баста (Лирический рэп)"
-                                data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">Баста -
-                                Лирический рэп (Тестовый минус)</option>
-                            <option value="leps" data-style="Григорий Лепс (Рок-баллада, надрыв)"
-                                data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">Григорий Лепс -
-                                Рок-баллада (Тестовый минус)</option>
-                            <option value="zhukov" data-style="Руки Вверх / Поп-хит 90-х (Танцевальный)"
-                                data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">Руки Вверх -
-                                Танцевальный хит (Тестовый минус)</option>
-                        </select>
-                        <i class="ph ph-caret-down select-arrow"></i>
-                    </div>
-                </div>
+                <!-- Melody section moved down -->
 
                 <div class="form-group">
                     <div class="segment-control">
                         <input type="radio" id="mode-ai" name="generation-mode" value="ai" checked>
-                        <label for="mode-ai">✨ ИИ Генерация</label>
+                        <label for="mode-ai">✨ ИИ-Поэт</label>
 
                         <input type="radio" id="mode-manual" name="generation-mode" value="manual">
-                        <label for="mode-manual">✍️ Свой готовый текст</label>
+                        <label for="mode-manual">✍️ Свой стих</label>
                     </div>
                 </div>
 
@@ -175,6 +157,31 @@
                         </button>
                     </div>
                     <div id="mic-status" class="status-text hidden">Слушаю вас...</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="melody">Выберите фоновую музыку</label>
+                    <div class="input-wrapper select-wrapper">
+                        <i class="ph ph-vinyl-record"></i>
+                        <select id="melody" required>
+                            <option value="" disabled selected>Выберите стиль хита...</option>
+                            <option value="basta" data-style="Баста (Лирический рэп)"
+                                data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">Баста -
+                                Лирический рэп (Тестовый минус)</option>
+                            <option value="leps" data-style="Григорий Лепс (Рок-баллада, надрыв)"
+                                data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">Григорий Лепс -
+                                Рок-баллада (Тестовый минус)</option>
+                            <option value="zhukov" data-style="Руки Вверх / Поп-хит 90-х (Танцевальный)"
+                                data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">Руки Вверх -
+                                Танцевальный хит (Тестовый минус)</option>
+                        </select>
+                        <i class="ph ph-caret-down select-arrow"></i>
+                    </div>
+                    <!-- Future upload area -->
+                    <!-- <div class="audio-upload-dropzone">
+                        <i class="ph ph-upload-simple"></i>
+                        <span>или перетащите свой .mp3 файл сюда</span>
+                    </div> -->
                 </div>
 
                 <button type="submit" id="generate-btn" class="btn primary-btn btn-glow">
