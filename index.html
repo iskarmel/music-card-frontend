@@ -172,21 +172,10 @@
                         <label for="src-link"><i class="ph ph-link"></i> Ссылка</label>
                     </div>
 
-                    <div id="audio-catalog-wrapper" class="input-wrapper select-wrapper audio-input-view">
-                        <i class="ph ph-vinyl-record"></i>
-                        <select id="melody">
-                            <option value="" disabled selected>Выберите стиль хита...</option>
-                            <option value="basta" data-style="Баста (Лирический рэп)"
-                                data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">Баста -
-                                Лирический рэп (Тестовый минус)</option>
-                            <option value="leps" data-style="Григорий Лепс (Рок-баллада, надрыв)"
-                                data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">Григорий Лепс -
-                                Рок-баллада (Тестовый минус)</option>
-                            <option value="zhukov" data-style="Руки Вверх / Поп-хит 90-х (Танцевальный)"
-                                data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">Руки Вверх -
-                                Танцевальный хит (Тестовый минус)</option>
-                        </select>
-                        <i class="ph ph-caret-down select-arrow"></i>
+                    <div id="audio-catalog-wrapper" class="audio-input-view">
+                        <div id="track-catalog" class="track-catalog-grid">
+                            <!-- Tracks will be dynamically injected here by app.js -->
+                        </div>
                     </div>
 
                     <div id="audio-upload-wrapper" class="audio-upload-dropzone audio-input-view hidden">
