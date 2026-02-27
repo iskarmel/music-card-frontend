@@ -612,6 +612,10 @@ textarea {
 .icon-btn {
     width: 45px;
     height: 45px;
+    min-width: 45px;
+    /* Prevent shrinking on mobile */
+    min-height: 45px;
+    flex-shrink: 0;
     border-radius: 50%;
     border: none;
     background: var(--primary);
@@ -638,6 +642,10 @@ textarea {
 .audio-info {
     display: flex;
     flex-direction: column;
+    flex-grow: 1;
+    /* Allow taking remaining space */
+    overflow: hidden;
+    /* Prevent text spilling out of container */
 }
 
 .now-playing-label {
