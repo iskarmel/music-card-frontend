@@ -814,35 +814,31 @@ textarea {
 
 /* Play Preview Button */
 .track-play-preview {
-    position: absolute;
-    /* Positioning relative to .track-item */
-    top: 5px;
-    right: 5px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
+    margin-top: 10px;
+    width: 100%;
+    padding: 6px 0;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 5px;
     font-size: 0.8rem;
-    opacity: 0;
     transition: var(--transition);
-    border: none;
+    border: 1px solid var(--border);
     cursor: pointer;
     z-index: 2;
-    /* Bring above everything in tile */
 }
 
-.track-item:hover .track-play-preview,
-.track-item.playing .track-play-preview {
-    opacity: 1;
+.track-item:hover .track-play-preview {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .track-item.playing .track-play-preview {
     background: var(--primary);
     color: white;
+    border-color: var(--primary);
 }
 
 /* ==========================================================================
