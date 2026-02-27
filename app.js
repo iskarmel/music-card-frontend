@@ -8,15 +8,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const recipientInput = document.getElementById('recipient-name');
     const occasionInput = document.getElementById('occasion');
 
+    // Catalog Data
+    const TRACK_CATALOG = [
+        {
+            id: 'basta',
+            title: 'Лирический рэп (Тестовый минус)',
+            genre: 'Рэп / Хип-Хоп',
+            style: 'Баста (Лирический рэп)',
+            url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+            icon: 'ph-microphone-stage'
+        },
+        {
+            id: 'leps',
+            title: 'Рок-баллада (Тестовый минус)',
+            genre: 'Поп-рок / Эстрада',
+            style: 'Григорий Лепс (Рок-баллада, надрыв)',
+            url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+            icon: 'ph-guitar'
+        },
+        {
+            id: 'zhukov',
+            title: 'Танцевальный хит (Тестовый минус)',
+            genre: 'Поп / 90-е',
+            style: 'Руки Вверх / Поп-хит 90-х (Танцевальный)',
+            url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+            icon: 'ph-speaker-hifi'
+        }
+    ];
+
+    let selectedTrackId = null;
+
     // Audio Elements
     const audioSourceRadios = document.querySelectorAll('input[name="audio-source"]');
     const audioCatalogWrapper = document.getElementById('audio-catalog-wrapper');
+    const trackCatalogContainer = document.getElementById('track-catalog');
     const audioUploadWrapper = document.getElementById('audio-upload-wrapper');
     const audioLinkWrapper = document.getElementById('audio-link-wrapper');
     const audioFileInput = document.getElementById('audio-file');
     const uploadFilename = document.getElementById('upload-filename');
     const audioLinkInput = document.getElementById('audio-link');
-    const melodySelect = document.getElementById('melody');
 
     const dictationInput = document.getElementById('dictation');
     const dictationLabel = document.getElementById('dictation-label');
@@ -62,6 +92,76 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPlaying = false;
     let currentAudioUrl = '';
     let currentCardId = null; // Store the ID if this card was loaded or already saved
+    let previewAudio = null;
+
+    // --- Render Track Catalog ---
+    const renderTrackCatalog = () => {
+        trackCatalogContainer.innerHTML = '';
+
+        TRACK_CATALOG.forEach(track => {
+            const trackItem = document.createElement('div');
+            trackItem.className = 'track-item';
+            trackItem.dataset.id = track.id;
+
+            trackItem.innerHTML = `
+                <i class="ph ${track.icon} track-icon"></i>
+                <span class="track-title">${track.title}</span>
+                <span class="track-genre">${track.genre}</span>
+                <button class="track-play-preview" aria-label="Preview" data-url="${track.url}">
+                    <i class="ph-bold ph-play"></i>
+                </button>
+            `;
+
+            // Selection Logic
+            trackItem.addEventListener('click', (e) => {
+                if (e.target.closest('.track-play-preview')) return; // Ignore if clicked play preview button
+
+                // Deselect others
+                trackCatalogContainer.querySelectorAll('.track-item').forEach(el => el.classList.remove('selected'));
+                // Select this one
+                trackItem.classList.add('selected');
+                selectedTrackId = track.id;
+            });
+
+            // Preview Play Logic
+            const previewBtn = trackItem.querySelector('.track-play-preview');
+            previewBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Avoid triggering selection
+
+                if (previewAudio && previewAudio.src === track.url && !previewAudio.paused) {
+                    // Stop playing currently playing track
+                    previewAudio.pause();
+                    trackItem.classList.remove('playing');
+                    previewBtn.innerHTML = '<i class="ph-bold ph-play"></i>';
+                } else {
+                    // Stop previous audio if exists
+                    if (previewAudio) {
+                        previewAudio.pause();
+                        trackCatalogContainer.querySelectorAll('.track-item').forEach(el => {
+                            el.classList.remove('playing');
+                            el.querySelector('.track-play-preview').innerHTML = '<i class="ph-bold ph-play"></i>';
+                        });
+                    }
+
+                    // Play this audio
+                    previewAudio = new Audio(track.url);
+                    previewAudio.play();
+                    trackItem.classList.add('playing');
+                    previewBtn.innerHTML = '<i class="ph-bold ph-stop"></i>';
+
+                    previewAudio.addEventListener('ended', () => {
+                        trackItem.classList.remove('playing');
+                        previewBtn.innerHTML = '<i class="ph-bold ph-play"></i>';
+                    });
+                }
+            });
+
+            trackCatalogContainer.appendChild(trackItem);
+        });
+    };
+
+    // Initialize catalog UI
+    renderTrackCatalog();
 
     // --- Audio Context and Visualizer ---
     let audioCtx;
@@ -327,10 +427,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let style = '';
 
         if (audioSource === 'catalog') {
-            const melodyOption = melodySelect.options[melodySelect.selectedIndex];
-            audioUrl = melodyOption.getAttribute('data-url');
-            melodyText = melodyOption.text;
-            style = melodyOption.getAttribute('data-style') || melodyText;
+            const track = TRACK_CATALOG.find(t => t.id === selectedTrackId);
+            if (!track) {
+                alert('Пожалуйста, выберите минусовку из каталога');
+                return;
+            }
+            audioUrl = track.url;
+            melodyText = track.title;
+            style = track.style;
         } else if (audioSource === 'link') {
             audioUrl = audioLinkInput.value.trim();
             melodyText = 'Пользовательский трек (Ссылка)';
