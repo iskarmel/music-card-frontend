@@ -7,7 +7,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Form Inputs
     const recipientInput = document.getElementById('recipient-name');
     const occasionInput = document.getElementById('occasion');
+
+    // Audio Elements
+    const audioSourceRadios = document.querySelectorAll('input[name="audio-source"]');
+    const audioCatalogWrapper = document.getElementById('audio-catalog-wrapper');
+    const audioUploadWrapper = document.getElementById('audio-upload-wrapper');
+    const audioLinkWrapper = document.getElementById('audio-link-wrapper');
+    const audioFileInput = document.getElementById('audio-file');
+    const uploadFilename = document.getElementById('upload-filename');
+    const audioLinkInput = document.getElementById('audio-link');
     const melodySelect = document.getElementById('melody');
+
     const dictationInput = document.getElementById('dictation');
     const dictationLabel = document.getElementById('dictation-label');
     const dictationHelper = document.getElementById('dictation-helper');
@@ -94,10 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isIOS) {
                 try {
                     source = audioCtx.createMediaElementSource(bgAudio);
-                    const voiceSource = audioCtx.createMediaElementSource(voiceAudio);
-
                     source.connect(analyser);
-                    voiceSource.connect(analyser);
                     analyser.connect(audioCtx.destination);
                 } catch (e) {
                     console.warn("Could not connect audio sources to analyser (likely already connected):", e);
@@ -202,6 +209,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // --- Audio Source Toggle Logic ---
+    audioSourceRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const source = e.target.value;
+            audioCatalogWrapper.classList.add('hidden');
+            audioUploadWrapper.classList.add('hidden');
+            audioLinkWrapper.classList.add('hidden');
+
+            if (source === 'catalog') {
+                audioCatalogWrapper.classList.remove('hidden');
+            } else if (source === 'upload') {
+                audioUploadWrapper.classList.remove('hidden');
+            } else if (source === 'link') {
+                audioLinkWrapper.classList.remove('hidden');
+            }
+        });
+    });
+
+    audioFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            uploadFilename.textContent = file.name;
+            uploadFilename.style.color = '#fff';
+        } else {
+            uploadFilename.innerHTML = 'Нажмите, чтобы выбрать .mp3 файл<br><small>(до 15 МБ)</small>';
+            uploadFilename.style.color = '';
+        }
+    });
+
+    const uploadAudioFile = async (file) => {
+        const formData = new FormData();
+        formData.append('audio', file);
+
+        try {
+            const response = await fetch('https://music-card-backend.onrender.com/api/upload-audio', {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Ошибка загрузки аудио на сервер');
+            }
+            const data = await response.json();
+            return data.url;
+        } catch (e) {
+            console.error('Audio upload failed:', e);
+            throw e;
+        }
+    };
+
     const startRecording = () => {
         if (recognition) {
             try {
@@ -262,10 +319,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const name = recipientInput.value.trim();
         const occasion = occasionInput.value.trim();
-        const melodyOption = melodySelect.options[melodySelect.selectedIndex];
-        const audioUrl = melodyOption.getAttribute('data-url');
-        const melodyText = melodyOption.text;
         const dictation = dictationInput.value.trim();
+
+        const audioSource = document.querySelector('input[name="audio-source"]:checked').value;
+        let audioUrl = '';
+        let melodyText = '';
+        let style = '';
+
+        if (audioSource === 'catalog') {
+            const melodyOption = melodySelect.options[melodySelect.selectedIndex];
+            audioUrl = melodyOption.getAttribute('data-url');
+            melodyText = melodyOption.text;
+            style = melodyOption.getAttribute('data-style') || melodyText;
+        } else if (audioSource === 'link') {
+            audioUrl = audioLinkInput.value.trim();
+            melodyText = 'Пользовательский трек (Ссылка)';
+            style = 'Нейтральный стиль';
+            if (!audioUrl) {
+                alert('Пожалуйста, вставьте ссылку на аудио-файл');
+                return;
+            }
+        } else if (audioSource === 'upload') {
+            const file = audioFileInput.files[0];
+            if (!file) {
+                alert('Пожалуйста, выберите аудио-файл для загрузки');
+                return;
+            }
+            melodyText = file.name;
+            style = 'Нейтральный стиль';
+            audioUrl = 'pending_upload';
+        }
 
         if (!name || !occasion || !audioUrl || !dictation) return;
 
@@ -273,9 +356,23 @@ document.addEventListener('DOMContentLoaded', () => {
         form.classList.add('hidden');
         loadingState.classList.remove('hidden');
 
+        try {
+            if (audioSource === 'upload') {
+                const loadingText = loadingState.querySelector('.loader-text');
+                const origText = loadingText.textContent;
+                loadingText.textContent = 'Загружаем аудиофайл в облако...';
+                audioUrl = await uploadAudioFile(audioFileInput.files[0]);
+                loadingText.textContent = origText;
+            }
+        } catch (e) {
+            alert('Ошибка загрузки файла: ' + e.message);
+            loadingState.classList.add('hidden');
+            form.classList.remove('hidden');
+            return;
+        }
+
         // 2. Generate or use manual content
         const generationMode = document.querySelector('input[name="generation-mode"]:checked').value;
-        const style = melodyOption.getAttribute('data-style') || melodySelect.options[melodySelect.selectedIndex].text;
 
         let generatedLyrics = '';
         if (generationMode === 'manual') {
@@ -322,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- Audio Player Controls ---
+    // --- Unified Audio Player Controls ---
     const togglePlay = async (forcePlay = false) => {
         if (isPlaying && !forcePlay) {
             bgAudio.pause();
@@ -471,8 +568,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Stop audio
         bgAudio.pause();
         bgAudio.currentTime = 0;
-        voiceAudio.pause();
-        voiceAudio.currentTime = 0;
 
         isPlaying = false;
         if (visualizerAnimationId) cancelAnimationFrame(visualizerAnimationId);
@@ -494,7 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!textToSpeech) return;
 
         const originalText = voiceBtn.innerHTML;
-        voiceBtn.innerHTML = '<i class="ph-bold ph-spinner ph-spin"></i> Подготовка...';
+        voiceBtn.innerHTML = '<i class="ph-bold ph-spinner ph-spin"></i> Сведение трека...';
         voiceBtn.disabled = true;
 
         try {
@@ -504,32 +599,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 audioCtx.resume();
             }
 
-            // For mobile Safari compatibility, we MUST call .play() synchronously inside 
-            // the click handler, without awaiting a fetch() first.
-            const url = `https://music-card-backend.onrender.com/api/speech?text=${encodeURIComponent(textToSpeech)}&voice=${voiceSelect.value}`;
-            voiceAudio.src = url;
+            // We must now fetch the mixed track first because we need to send a POST request with bgUrl
+            const response = await fetch('https://music-card-backend.onrender.com/api/mix-audio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: textToSpeech,
+                    voice: voiceSelect.value,
+                    bgUrl: currentAudioUrl
+                })
+            });
 
-            // Start playing immediately. The browser will handle the network streaming.
-            await voiceAudio.play();
-
-            // Mix with background music
-            if (!isPlaying) {
-                await togglePlay(true);
+            if (!response.ok) {
+                throw new Error("Failed to mix track");
             }
 
-            // Lower background music volume smoothly to let voice punch through (ducking)
-            fadeAudio(bgAudio, 0.15, 500); // 15% volume over 500ms
-            voiceAudio.volume = 1.0;
+            // Convert response to a blob url for the audio element
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
 
-            voiceAudio.onended = () => {
-                fadeAudio(bgAudio, 1.0, 1000); // fade back to 100% over 1 second
-                voiceBtn.innerHTML = '<i class="ph-bold ph-microphone-stage"></i> Повторить голос';
-                voiceBtn.disabled = false;
-            };
+            // Replace the background audio source with the new mixed track
+            bgAudio.src = blobUrl;
+
+            // Start playing the single mixed track
+            await togglePlay(true);
+
+            // Important: we don't duck volume anymore because the server did it inside FFmpeg
+            bgAudio.volume = 1.0;
+
+            voiceBtn.innerHTML = '<i class="ph-bold ph-microphone-stage"></i> Пересоздать микс';
+            voiceBtn.disabled = false;
 
         } catch (error) {
             console.error(error);
-            alert('Не удалось запустить голос: ' + error.message);
+            alert('Не удалось свести трек на сервере: ' + error.message);
             voiceBtn.innerHTML = originalText;
             voiceBtn.disabled = false;
         }
